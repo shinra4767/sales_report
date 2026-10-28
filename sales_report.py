@@ -1,9 +1,15 @@
 import csv
 from pathlib import Path
+import argparse
+
+#Argparese
+parser = argparse.ArgumentParser(description="Create a sales report from monthly CSV files.")
+parser.add_argument("--data-dir", default=None, help="Folder containing the CSV files.")
+parser.add_argument("-o", "--output", default=None, help="Where the report gets written")
+args = parser.parse_args()
 
 MONTHS = ["jan", "feb", "mar", "apr", "may", "jun",
           "jul", "aug", "sep", "oct", "nov", "dec"]
-
 
 def month_key(path):
     name = path.stem.lower()
@@ -36,9 +42,15 @@ def main():
     all_skipped = []
     month_totals = {}
     product_totals = {}
-    data_dir = Path(__file__).parent / "sample_data"
+    script_dir = Path(__file__).parent
+    data_dir = Path(args.data_dir) if args.data_dir else script_dir/ "sample_data"
+    output_path = Path(args.output) if args.output else script_dir / "report.txt"
+    csv_files = sorted(data_dir.glob("*.csv"), key=month_key)
+    if not csv_files:
+        print(f"No CSV files found in: {data_dir}")
+        raise SystemExit(1)
 
-    for path in sorted(data_dir.glob("*.csv"), key=month_key):
+    for path in csv_files:
         month = path.stem
         good_rows, skipped_rows = read_sales(path)
         all_skipped.extend(skipped_rows)
@@ -85,10 +97,10 @@ def main():
     report = "\n".join(lines)
     print()
     print(report)
-    (Path(__file__).parent / "report.txt").write_text(report + "\n", encoding="utf-8")
+    output_path.write_text(report + "\n", encoding="utf-8")
 
-    output_path = Path(__file__).parent / "results_all.csv"
-    with open(output_path, 'w', newline='', encoding='utf-8') as f:
+    csv_path = script_dir / "results_all.csv"
+    with open(csv_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(["month", "product", "revenue"])
         writer.writerows(all_results)

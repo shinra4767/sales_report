@@ -1,12 +1,27 @@
 import csv
 from pathlib import Path
 import argparse
+import logging
+
+SCRIPT_DIR = Path(__file__).parent
 
 #Argparese
 parser = argparse.ArgumentParser(description="Create a sales report from monthly CSV files.")
 parser.add_argument("--data-dir", default=None, help="Folder containing the CSV files.")
 parser.add_argument("-o", "--output", default=None, help="Where the report gets written")
 args = parser.parse_args()
+
+file_handler = logging.FileHandler(SCRIPT_DIR / "sales_report.log", encoding="utf-8")
+file_handler.setLevel(logging.DEBUG)
+
+console = logging.StreamHandler()
+console.setLevel(logging.WARNING)
+
+logging.basicConfig(
+    level=logging.DEBUG,
+    format= "%(asctime)s %(levelname)s %(message)s",
+    handlers=[file_handler, console],
+)
 
 MONTHS = ["jan", "feb", "mar", "apr", "may", "jun",
           "jul", "aug", "sep", "oct", "nov", "dec"]
@@ -29,6 +44,7 @@ def read_sales(path):
                 price = float(row['price'])
                 quantity = int(row['quantity'])
             except ValueError:
+                logging.warning("%s: row %s skipped (invalid data)", Path(path).name, row_nr)
                 skipped_rows.append((Path(path).name, row_nr))
                 continue
 
@@ -42,9 +58,8 @@ def main():
     all_skipped = []
     month_totals = {}
     product_totals = {}
-    script_dir = Path(__file__).parent
-    data_dir = Path(args.data_dir) if args.data_dir else script_dir/ "sample_data"
-    output_path = Path(args.output) if args.output else script_dir / "report.txt"
+    data_dir = Path(args.data_dir) if args.data_dir else SCRIPT_DIR/ "sample_data"
+    output_path = Path(args.output) if args.output else SCRIPT_DIR / "report.txt"
     csv_files = sorted(data_dir.glob("*.csv"), key=month_key)
     if not csv_files:
         print(f"No CSV files found in: {data_dir}")
@@ -62,14 +77,14 @@ def main():
             if quantity > 0:
                 file_total += revenue
                 product_totals[product] = product_totals.get(product, 0) + revenue
-                print(f"{product}:{price:.2f}€ x {quantity} = Sum {revenue:.2f}€")
+                logging.debug("%s: %.2f x %s = %.2f", product, price, quantity, revenue)
             else:
-                print(f"{product} isnt in stock.")
+                logging.debug("%s: no sales", product)
 
             all_results.append([month, product, revenue])
 
         month_totals[month] = file_total
-        print(f"Total revenue {month}: {file_total:.2f}€")
+        logging.info("Total revenue %s: %.2f€", month, file_total)
 
     # --- Aggregation ---
     top_products = sorted(product_totals.items(), key=lambda item: item[1], reverse=True)
@@ -95,11 +110,10 @@ def main():
 
     # --- Output ---
     report = "\n".join(lines)
-    print()
     print(report)
     output_path.write_text(report + "\n", encoding="utf-8")
 
-    csv_path = script_dir / "results_all.csv"
+    csv_path = SCRIPT_DIR / "results_all.csv"
     with open(csv_path, 'w', newline='', encoding='utf-8') as f:
         writer = csv.writer(f)
         writer.writerow(["month", "product", "revenue"])

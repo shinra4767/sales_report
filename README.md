@@ -2,16 +2,8 @@
 Processes your sales for you in csv format. Just give it The monthly csv files with your sales and it calculates the revenue.
 Creates a text file with the Revenue per month and the top products. Also creates a csv if you need it for other reports.
 Example:
-Revenue per month:
-  jan    117.00€
-  feb    112.50€
-  mar    131.00€
+<img width="200" height="237" alt="image" src="https://github.com/user-attachments/assets/bc17e69f-b6d7-49ff-b736-22f3ccb13971" />
 
-Top products:
-  1. Apple     185.00€
-  2. Book       72.00€
-  3. Banana     65.00€
-  4. Pen        38.50€
 
 # Error Handling
 if you have a bad file or in a file you have some nonsense you get to see where the problem is and it still calculates the rest of the file/s
@@ -33,5 +25,5 @@ Skipped rows: 1
    My example: py sales_report.py --data-dir sample_data --output my_report.txt
 3. Wait until its done
 
-#Input format
+# Input format
 It only works if your csv has "product,price,quantity" as header (without the "")

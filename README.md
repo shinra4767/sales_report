@@ -1,42 +1,75 @@
-# sales_report
-Processes your sales for you in csv format. Just give it The monthly csv files with your sales and it calculates the revenue.
-Creates a text file with the Revenue per month and the top products. Also creates a csv if you need it for other reports.
+# Sales Report Generator
 
-Example:
-<img width="200" height="237" alt="image" src="https://github.com/user-attachments/assets/bc17e69f-b6d7-49ff-b736-22f3ccb13971" />
+Turns your monthly sales CSV files into a clean summary report.
+Put the files in a folder, run one command, and get revenue per month and your top products.
+Bad rows and unreadable files are skipped and listed in the report instead of crashing the tool.
 
+## Example output
 
-# Error Handling
-if you have a bad file or in a file you have some nonsense you get to see where the problem is and it still calculates the rest of the file/s
+```text
+=== Sales Report ===
 
-Bad row in csv file: 
+Revenue per month:
+  jan    117.00€
+  feb    112.50€
+  mar    131.00€
 
-product,price,quantity
-
-Pen,3,2
-
-Book,4,10
-
-Apple,1.5,50
-
-Banana,2,5
-
-kiwi,abc,15
-
-The error you get:
+Top products:
+  1. Apple     185.00€
+  2. Book       72.00€
+  3. Banana     65.00€
+  4. Pen        38.50€
 
 Skipped rows: 1
-
   mar.csv, row 6
-  
-## How to run
-1. download the .py
-2. in terminal put:
-3.  py sales_report.py --data-dir "here path to your folder with your .csv" --output "name your file.txt"
-   
-   My example: py sales_report.py --data-dir sample_data --output my_report.txt
-   
-5. Wait until its done
 
-# Input format
-It only works if your csv has "product,price,quantity" as header (without the "")
+Grand total: 360.50€
+```
+
+## Requirements
+
+Python 3 (no extra packages needed).
+
+## How to run
+
+1. Download `sales_report.py` and the `sample_data` folder.
+2. In a terminal, in that folder, run:
+
+```powershell
+py sales_report.py
+```
+
+To use your own files and choose the report name:
+
+```powershell
+py sales_report.py --data-dir "path\to\your\folder" --output my_report.txt
+```
+
+## What you get
+
+- `report.txt` (or the name you chose): the summary report
+- `results_all.csv`: every product's revenue per month, for use in other reports
+- `sales_report.log`: detailed log of what happened
+
+## Input format
+
+Each CSV needs the header `product,price,quantity`, for example:
+
+```csv
+product,price,quantity
+Pen,3,2
+Book,4,10
+kiwi,abc,15
+```
+
+File names are used as month names (`jan.csv`, `feb.csv`, ...).
+
+## Handling bad data
+
+- **Bad row** (like `kiwi,abc,15` above): skipped and listed in the report. The rest of the file is still counted.
+- **Wrong header** (a missing or misspelled column): the whole file is skipped and listed under "Skipped files". Other files are still processed.
+- **No usable data at all:** no report is written, and the tool exits with an error.
+
+## Limitations
+
+Products with zero sales don't appear in "Top products".

@@ -68,7 +68,7 @@ def main():
     output_path = Path(args.output) if args.output else SCRIPT_DIR / "report.txt"
     csv_files = sorted(data_dir.glob("*.csv"), key=month_key)
     if not csv_files:
-        print(f"No CSV files found in: {data_dir}")
+        logging.error("No CSV files found in %s", data_dir)
         raise SystemExit(1)
 
     for path in csv_files:
@@ -99,6 +99,10 @@ def main():
         month_totals[month] = file_total
         logging.info("Total revenue %s: %.2f€", month, file_total)
 
+        if not month_totals:
+            logging.error("No readable data found, no report written.")
+            raise SystemExit(1)
+
     # --- Aggregation ---
     top_products = sorted(product_totals.items(), key=lambda item: item[1], reverse=True)
     grand_total = sum(month_totals.values())
@@ -122,7 +126,7 @@ def main():
     if skipped_files:
         lines += ["", f"Skipped files: {len(skipped_files)}"]
         for name in skipped_files:
-            lines.append(f" {name}")
+            lines.append(f"{name}")
 
     lines += ["", f"Grand total: {grand_total:.2f}€"]
 

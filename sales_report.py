@@ -35,9 +35,14 @@ def month_key(path):
 def read_sales(path):
     good_rows = []
     skipped_rows = []
+    required = {"product", "price", "quantity"}
 
     with open(path, mode='r', encoding='utf-8', newline='') as file:
         csv_reader = csv.DictReader(file)
+
+        missing = required - set(csv_reader.fieldnames or [])
+        if missing:
+            raise ValueError(f"{Path(path).name}: missing columns: {sorted(missing)}")
 
         for row_nr, row in enumerate(csv_reader, start=2):
             try:
@@ -56,6 +61,7 @@ def read_sales(path):
 def main():
     all_results = []
     all_skipped = []
+    skipped_files = []
     month_totals = {}
     product_totals = {}
     data_dir = Path(args.data_dir) if args.data_dir else SCRIPT_DIR/ "sample_data"
@@ -67,8 +73,15 @@ def main():
 
     for path in csv_files:
         month = path.stem
-        good_rows, skipped_rows = read_sales(path)
+        try:
+            good_rows, skipped_rows = read_sales(path)
+        except ValueError as e:
+            logging.warning("File skipped: %s", e)
+            skipped_files.append(path.name)
+            continue
+
         all_skipped.extend(skipped_rows)
+        logging.info("Data read from %s", path.name)
 
         file_total = 0
         for product, price, quantity in good_rows:
@@ -105,6 +118,11 @@ def main():
     lines += ["", f"Skipped rows: {len(all_skipped)}"]
     for file_name, row_nr in all_skipped:
         lines.append(f"  {file_name}, row {row_nr}")
+
+    if skipped_files:
+        lines += ["", f"Skipped files: {len(skipped_files)}"]
+        for name in skipped_files:
+            lines.append(f" {name}")
 
     lines += ["", f"Grand total: {grand_total:.2f}€"]
 
